@@ -1,0 +1,1205 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hermes Agent 学习笔记 — 零基础到精通</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap');
+  
+  :root {
+    --bg: #0a0a0f;
+    --bg-card: #12121a;
+    --bg-card-hover: #1a1a28;
+    --border: #1e1e32;
+    --accent: #7c5cfc;
+    --accent-glow: rgba(124, 92, 252, 0.3);
+    --accent2: #00d4aa;
+    --text: #e0e0f0;
+    --text-dim: #8888aa;
+    --text-bright: #ffffff;
+    --gradient-1: linear-gradient(135deg, #7c5cfc 0%, #a855f7 50%, #6366f1 100%);
+    --gradient-2: linear-gradient(135deg, #00d4aa 0%, #0ea5e9 100%);
+    --gradient-dark: linear-gradient(180deg, #0a0a1a 0%, #0d0d22 100%);
+    --code-bg: #0d1117;
+    --danger: #ef4444;
+    --warning: #f59e0b;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Noto Sans SC', -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    overflow-x: hidden;
+  }
+
+  /* Ambient background */
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: 
+      radial-gradient(ellipse at 20% 0%, rgba(124, 92, 252, 0.08) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 100%, rgba(0, 212, 170, 0.06) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 50%, rgba(99, 102, 241, 0.04) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Grid pattern overlay */
+  body::after {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-image: 
+      linear-gradient(rgba(124, 92, 252, 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(124, 92, 252, 0.03) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .app { position: relative; z-index: 1; }
+
+  /* HEADER */
+  .hero {
+    text-align: center;
+    padding: 80px 20px 60px;
+    position: relative;
+  }
+  .hero-badge {
+    display: inline-block;
+    padding: 6px 20px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    background: rgba(124, 92, 252, 0.1);
+    border: 1px solid rgba(124, 92, 252, 0.3);
+    color: var(--accent);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 24px;
+  }
+  .hero h1 {
+    font-size: clamp(32px, 5vw, 56px);
+    font-weight: 900;
+    background: var(--gradient-1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 16px;
+    line-height: 1.2;
+  }
+  .hero-subtitle {
+    font-size: 18px;
+    color: var(--text-dim);
+    font-weight: 300;
+    max-width: 600px;
+    margin: 0 auto 32px;
+  }
+  .hero-meta {
+    display: flex;
+    justify-content: center;
+    gap: 32px;
+    flex-wrap: wrap;
+  }
+  .hero-meta-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: var(--text-dim);
+  }
+  .hero-meta-item .icon { font-size: 18px; }
+
+  /* NAVIGATION */
+  .nav-sticky {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(10, 10, 15, 0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 20px;
+  }
+  .nav-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    gap: 4px;
+    overflow-x: auto;
+    padding: 12px 0;
+    scrollbar-width: none;
+  }
+  .nav-inner::-webkit-scrollbar { display: none; }
+  .nav-link {
+    flex-shrink: 0;
+    padding: 6px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    color: var(--text-dim);
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .nav-link:hover { color: var(--text-bright); background: var(--bg-card); }
+  .nav-link.active { color: var(--accent); background: rgba(124, 92, 252, 0.1); }
+
+  /* MAIN CONTENT */
+  .container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 40px 20px 80px;
+  }
+
+  /* CHAPTER */
+  .chapter {
+    margin-bottom: 64px;
+    scroll-margin-top: 80px;
+  }
+  .chapter-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+    margin-bottom: 32px;
+  }
+  .chapter-num {
+    flex-shrink: 0;
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+    background: var(--gradient-1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 20px;
+    font-weight: 700;
+    color: #fff;
+    box-shadow: 0 8px 32px var(--accent-glow);
+  }
+  .chapter-title-group h2 {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text-bright);
+    margin-bottom: 4px;
+  }
+  .chapter-title-group .duration {
+    font-size: 13px;
+    color: var(--text-dim);
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .chapter-tags {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+  .tag {
+    padding: 4px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+  .tag-purple { background: rgba(124,92,252,.15); color: #a78bfa; }
+  .tag-green { background: rgba(0,212,170,.15); color: #34d399; }
+  .tag-blue { background: rgba(14,165,233,.15); color: #38bdf8; }
+  .tag-orange { background: rgba(245,158,11,.15); color: #fbbf24; }
+
+  /* CONTENT BOXES */
+  .content-block {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+    margin-bottom: 20px;
+    transition: all 0.3s;
+  }
+  .content-block:hover {
+    border-color: rgba(124, 92, 252, 0.3);
+    box-shadow: 0 4px 24px rgba(124, 92, 252, 0.08);
+  }
+  .content-block h3 {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--text-bright);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .content-block h3 .emoji { font-size: 22px; }
+  .content-block p {
+    color: var(--text-dim);
+    margin-bottom: 12px;
+    font-size: 15px;
+  }
+  .content-block p:last-child { margin-bottom: 0; }
+  .content-block ul {
+    list-style: none;
+    padding: 0;
+  }
+  .content-block ul li {
+    padding: 6px 0 6px 24px;
+    position: relative;
+    color: var(--text-dim);
+    font-size: 14px;
+  }
+  .content-block ul li::before {
+    content: '▸';
+    position: absolute;
+    left: 4px;
+    color: var(--accent);
+    font-size: 12px;
+  }
+
+  /* CODE */
+  code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    background: var(--code-bg);
+    padding: 2px 8px;
+    border-radius: 4px;
+    color: var(--accent2);
+    border: 1px solid var(--border);
+  }
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    overflow-x: auto;
+    margin: 16px 0;
+    position: relative;
+  }
+  pre::before {
+    content: 'terminal';
+    position: absolute;
+    top: 8px;
+    right: 16px;
+    font-size: 11px;
+    color: var(--text-dim);
+    font-family: 'JetBrains Mono', monospace;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    opacity: 0.5;
+  }
+  pre code {
+    background: none;
+    border: none;
+    padding: 0;
+    color: #e6edf3;
+    font-size: 13px;
+    line-height: 1.6;
+  }
+
+  /* HIGHLIGHT BOX */
+  .highlight-box {
+    background: linear-gradient(135deg, rgba(124,92,252,.08), rgba(0,212,170,.06));
+    border: 1px solid rgba(124,92,252,.2);
+    border-radius: 12px;
+    padding: 20px;
+    margin: 16px 0;
+  }
+  .highlight-box .label {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+  }
+  .highlight-box p { color: var(--text); font-size: 14px; margin: 0; }
+
+  /* TABLE */
+  .table-wrap {
+    overflow-x: auto;
+    margin: 16px 0;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+  th {
+    background: rgba(124,92,252,.1);
+    color: var(--accent);
+    font-weight: 600;
+    padding: 12px 16px;
+    text-align: left;
+    border-bottom: 2px solid var(--border);
+    font-size: 13px;
+  }
+  td {
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-dim);
+  }
+  tr:hover td { background: rgba(124,92,252,.03); }
+
+  /* TIP CARDS */
+  .tip-card {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    margin: 12px 0;
+  }
+  .tip-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+  }
+  .tip-icon.info { background: rgba(14,165,233,.15); }
+  .tip-icon.warn { background: rgba(245,158,11,.15); }
+  .tip-icon.success { background: rgba(0,212,170,.15); }
+
+  /* TWO COL */
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin: 16px 0;
+  }
+  @media (max-width: 640px) { .two-col { grid-template-columns: 1fr; } }
+
+  /* FLOW */
+  .flow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding: 20px 0;
+  }
+  .flow-step {
+    padding: 10px 20px;
+    border-radius: 10px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    font-size: 13px;
+    color: var(--text-dim);
+    font-weight: 500;
+    text-align: center;
+  }
+  .flow-arrow {
+    color: var(--accent);
+    font-size: 20px;
+    font-weight: 700;
+  }
+
+  /* FOOTER */
+  .footer {
+    text-align: center;
+    padding: 60px 20px;
+    border-top: 1px solid var(--border);
+    color: var(--text-dim);
+    font-size: 13px;
+  }
+  .footer a {
+    color: var(--accent);
+    text-decoration: none;
+  }
+  .footer a:hover { text-decoration: underline; }
+
+  /* Animations */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .chapter { animation: fadeUp 0.5s ease-out; }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+<!-- HERO -->
+<header class="hero">
+  <div class="hero-badge">✦ Study Notes</div>
+  <h1>Hermes Agent 学习笔记</h1>
+  <p class="hero-subtitle">
+    零基础也能玩转 — 从安装部署到高级应用<br>
+    基于B站全14集教程整理
+  </p>
+  <div class="hero-meta">
+    <div class="hero-meta-item">
+      <span class="icon">📺</span> 原视频：B站 BV13YRjBTEPb
+    </div>
+    <div class="hero-meta-item">
+      <span class="icon">📚</span> 共 14 集
+    </div>
+    <div class="hero-meta-item">
+      <span class="icon">⏱️</span> 总时长 ~180 分钟
+    </div>
+    <div class="hero-meta-item">
+      <span class="icon">🏷️</span> 零基础·保姆级
+    </div>
+  </div>
+</header>
+
+<!-- STICKY NAV -->
+<nav class="nav-sticky">
+  <div class="nav-inner">
+    <a href="#p1" class="nav-link active">P1 简介</a>
+    <a href="#p2" class="nav-link">P2 前置准备</a>
+    <a href="#p3" class="nav-link">P3 安装部署</a>
+    <a href="#p4" class="nav-link">P4 接入应用</a>
+    <a href="#p5" class="nav-link">P5 首个案例</a>
+    <a href="#p6" class="nav-link">P6 个性化</a>
+    <a href="#p7" class="nav-link">P7 工具箱</a>
+    <a href="#p8" class="nav-link">P8 Skills</a>
+    <a href="#p9" class="nav-link">P9 持久记忆</a>
+    <a href="#p10" class="nav-link">P10 皮肤</a>
+    <a href="#p11" class="nav-link">P11 MCP</a>
+    <a href="#p12" class="nav-link">P12 Cron</a>
+    <a href="#p13" class="nav-link">P13 仪表板</a>
+    <a href="#p14" class="nav-link">P14 最佳实践</a>
+  </div>
+</nav>
+
+<!-- CONTENT -->
+<main class="container">
+
+<!-- ========== P1 ========== -->
+<section id="p1" class="chapter">
+  <div class="chapter-header">
+    <div class="chapter-num">01</div>
+    <div class="chapter-title-group">
+      <h2>Hermes Agent 简介</h2>
+      <span class="duration">⏱ 9:39</span>
+    </div>
+  </div>
+  <div class="chapter-tags">
+    <span class="tag tag-purple">概念入门</span>
+    <span class="tag tag-blue">对比分析</span>
+  </div>
+
+  <div class="content-block">
+    <h3><span class="emoji">🤖</span> Hermes Agent 是什么？</h3>
+    <p>Hermes Agent 是 <strong>Nous Research</strong> 开源的一款<strong>AI 智能体框架</strong>。打个比方：如果说 ChatGPT 是一个能聊天的"大脑"，那 Hermes Agent 就是给这个大脑装上了<strong>手脚和工具箱</strong>——它不仅能聊天，还能操作你的电脑、写代码、管理文件、控制智能家居、定时执行任务……</p>
+    <p>它的定位和 Claude Code（Anthropic）、Codex（OpenAI）属于同一类产品，但有两个独家特色：</p>
+    <ul>
+      <li><strong>自我进化能力</strong>：通过 Skills 系统，Hermes 能从每次解决问题的经验中学习，越用越聪明</li>
+      <li><strong>跨平台网关</strong>：同一个 AI 可以在终端、微信、QQ、飞书、Telegram、Discord 等十多个平台上使用，而且功能一致</li>
+    </ul>
+  </div>
+
+  <div class="content-block">
+    <h3><span class="emoji">⚡</span> 核心能力一览</h3>
+    <div class="table-wrap">
+      <table>
+        <tr><th>能力</th><th>说明</th></tr>
+        <tr><td>💬 智能对话</td><td>支持 20+ 模型提供商，可随时切换（OpenRouter、Anthropic、DeepSeek 等）</td></tr>
+        <tr><td>⌨️ 终端操作</td><td>在 Linux/macOS/WSL 上执行命令、管理进程</td></tr>
+        <tr><td>📁 文件管理</td><td>读写搜索文件、编辑代码、批量处理</td></tr>
+        <tr><td>🌐 联网搜索</td><td>浏览器自动化、网页内容抓取</td></tr>
+        <tr><td>🧩 技能系统</td><td>可复用的工作流程，像"AI的肌肉记忆"</td></tr>
+        <tr><td>🧠 持久记忆</td><td>跨会话记住你的偏好、环境配置、经验教训</td></tr>
+        <tr><td>📱 多平台</td><td>终端 + Telegram/Discord/微信/QQ/飞书/Slack 等 15+ 平台</td></tr>
+        <tr><td>⏰ 定时任务</td><td>Cron 风格的计划任务，自动执行</td></tr>
+        <tr><td>🔌 MCP 扩展</td><td>通过 MCP 协议接入任意第三方工具</td></tr>
+        <tr><td>🎯 多 Agent 协作</td><td>可同时运行多个 Hermes 实例，分工合作</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="highlight-box">
+    <div class="label">💡 一句话总结</div>
+    <p>Hermes Agent = AI 大脑 + 操作系统权限 + 持久记忆 + 跨平台通信 + 自我进化。它是你电脑里的"数字管家"。</p>
+  </div>
+</section>
+
+<!-- ========== P2 ========== -->
+<section id="p2" class="chapter">
+  <div class="chapter-header">
+    <div class="chapter-num">02</div>
+    <div class="chapter-title-group">
+      <h2>前置准备：安装前置软件</h2>
+      <span class="duration">⏱ 11:11</span>
+    </div>
+  </div>
+  <div class="chapter-tags">
+    <span class="tag tag-orange">环境配置</span>
+    <span class="tag tag-green">工具安装</span>
+  </div>
+
+  <div class="content-block">
+    <h3><span class="emoji">🛠</span> 你需要准备什么</h3>
+    <p>在安装 Hermes 之前，需要确保系统具备以下环境：</p>
+  </div>
+
+  <div class="two-col">
+    <div class="content-block">
+      <h3><span class="emoji">🐍</span> Python 环境</h3>
+      <p>Hermes 是 Python 项目，需要 <strong>Python 3.10+</strong></p>
+      <pre><code>python3 --version
+# 应输出 3.10.x 或更高</code></pre>
+      <p>推荐使用 <code>pyenv</code> 管理多个 Python 版本</p>
+    </div>
+    <div class="content-block">
+      <h3><span class="emoji">📦</span> Git &amp; 系统工具</h3>
+      <ul>
+        <li><strong>Git</strong> — 代码管理和 Skills 下载</li>
+        <li><strong>pip / pipx</strong> — Python 包管理</li>
+        <li><strong>curl / wget</strong> — 网络请求</li>
+        <li>Linux: <code>build-essential</code> 等编译工具</li>
+        <li>macOS: Xcode Command Line Tools</li>
+        <li>Windows: WSL2（推荐）</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="tip-card">
+    <div class="tip-icon info">📋</div>
+    <div>
+      <strong>Linux 一键安装依赖（Ubuntu/Debian）</strong>
+      <pre style="margin:8px 0 0;"><code>sudo apt update && sudo apt install -y python3 python3-pip python3-venv git curl build-essential</code></pre>
+    </div>
+  </div>
+
+  <div class="tip-card">
+    <div class="tip-icon warn">⚠️</div>
+    <div>
+      <strong>重要提示</strong>
+      <p style="margin:4px 0 0;">如果使用 Windows，强烈建议在 <strong>WSL2</strong> 中运行。原生 Windows 支持有限，部分功能（如终端操作）可能无法正常工作。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ========== P3 ========== -->
+<section id="p3" class="chapter">
+  <div class="chapter-header">
+    <div class="chapter-num">03</div>
+    <div class="chapter-title-group">
+      <h2>Hermes Agent 安装与部署</h2>
+      <span class="duration">⏱ 9:20</span>
+    </div>
+  </div>
+  <div class="chapter-tags">
+    <span class="tag tag-green">安装教程</span>
+    <span class="tag tag-purple">命令行</span>
+  </div>
+
+  <div class="content-block">
+    <h3><span class="emoji">🚀</span> 三种安装方式</h3>
+
+    <div class="tip-card">
+      <div class="tip-icon success">🥇</div>
+      <div>
+        <strong>方式一：一键安装脚本（推荐新手）</strong>
+        <pre style="margin:8px 0 0;"><code>curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh | bash</code></pre>
+        <p style="margin-top:8px;">脚本会自动处理所有依赖，安装完成后运行 <code>hermes</code> 即可开始。</p>
+      </div>
+    </div>
+
+    <div class="tip-card">
+      <div class="tip-icon info">🥈</div>
+      <div>
+        <strong>方式二：pip 安装（推荐开发者）</strong>
+        <pre style="margin:8px 0 0;"><code>pip install hermes-agent
+hermes setup   # 初始化配置</code></pre>
+      </div>
+    </div>
+
+    <div class="tip-card">
+      <div class="tip-icon info">🥉</div>
+      <div>
+        <strong>方式三：Git 源码安装（想贡献代码）</strong>
+        <pre style="margin:8px 0 0;"><code>git clone https://github.com/NousResearch/hermes-agent.git
+cd hermes-agent
+pip install -e .
+hermes</code></pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="content-block">
+    <h3><span class="emoji">⚙️</span> 安装后的首次配置</h3>
+    <div class="flow">
+      <div class="flow-step">运行 <code>hermes setup</code></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">选择模型提供商</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">配置 API Key</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">选择默认模型</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">开始使用！</div>
+    </div>
+    <p>配置向导会引导你完成模型选择（OpenRouter 推荐新手，免费额度够用）、API Key 设置等。完成后配置保存在 <code>~/.hermes/config.yaml</code> 中。</p>
+  </div>
+
+  <div class="content-block">
+    <h3><span class="emoji">🏥</span> 健康检查</h3>
+    <pre><code>hermes doctor          # 检查配置和依赖
+hermes doctor --fix    # 自动修复常见问题
+hermes status          # 查看运行状态</code></pre>
+  </div>
+</section>
+
+<!-- ========== P4 ========== -->
+<section id="p4" class="chapter">
+  <div class="chapter-header">
+    <div class="chapter-num">04</div>
+    <div class="chapter-title-group">
+      <h2>接入应用（微信、QQ、飞书）</h2>
+      <span class="duration">⏱ 17:36</span>
+    </div>
+  </div>
+  <div class="chapter-tags">
+    <span class="tag tag-blue">Gateway</span>
+    <span class="tag tag-purple">跨平台</span>
+    <span class="tag tag-green">消息平台</span>
+  </div>
+
+  <div class="content-block">
+    <h3><span class="emoji">🌐</span> Gateway 网关 — 让 Hermes 无处不在</h3>
+    <p>Hermes 的 Gateway（网关）是一个<strong>消息中继系统</strong>，让 Hermes 同时连接到多个聊天平台。你在微信上发消息，Hermes 就能在终端里回复——背后是同一个 AI 大脑。</p>
+  </div>
+
+  <div class="content-block">
+    <h3><span class="emoji">📱</span> 支持的平台</h3>
+    <div class="two-col">
+      <div>
+        <ul>
+          <li><strong>Telegram</strong> — Bot API</li>
+          <li><strong>Discord</strong> — Bot Token</li>
+          <li><strong>微信 (WeChat)</strong> — Bridge 连接</li>
+          <li><strong>QQ</strong> — 插件支持</li>
+          <li><strong>飞书 (Feishu)</strong> — 应用机器人</li>
+        </ul>
+      </div>
+      <div>
+        <ul>
+          <li><strong>Slack</strong> — Bot Token</li>
+          <li><strong>WhatsApp</strong> — API 接入</li>
+          <li><strong>Signal</strong> — signal-cli</li>
+          <li><strong>钉钉 (DingTalk)</strong> — 机器人</li>
+          <li><strong>Email / SMS</strong> — 邮件短信</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="content-block">
+    <h3><span class="emoji">🔧</span> 配置步骤（以微信为例）</h3>
+    <div class="flow">
+      <div class="flow-step">安装微信插件</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">配置 Bridge</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">启动 Gateway</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">微信扫码连接</div>
+    </div>
+    <pre><code># 配置网关平台
+hermes gateway setup
+
+# 启动网关服务
+hermes gateway run        # 前台运行（调试用）
+hermes gateway start      # 后台服务（生产用）
+
+# 查看状态
+hermes gateway status</code></pre>
+  </div>
+
+  <div class="highlight-box">
+    <div class="label">💡 核心理解</div>
+    <p>Gateway 就像给 Hermes 装了一个"万能聊天适配器"。不管消息从哪个平台进来，都走同一套 AI 逻辑处理。你可以在终端里说话，别人在微信上回复——无缝衔接。</p>
+  </div>
+</section>
+
+<!-- ========== P5 ========== -->
+<section id="p5" class="chapter">
+  <div class="chapter-header">
+    <div class="chapter-num">05</div>
+    <div class="chapter-title-group">
+      <h2>第一个应用案例</h2>
+      <span class="duration">⏱ 8:50</span>
+    </div>
+  </div>
+  <div class="chapter-tags">
+    <span class="tag tag-orange">动手实践</span>
+    <span class="tag tag-green">Hello World</span>
+  </div>
+
+  <div class="content-block">
+    <h3><span class="emoji">🎯</span> 三个入门级实战</h3>
+    <p>安装完 Hermes 后，可以从这些简单任务开始体验：</p>
+  </div>
+
+  <div class="two-col">
+    <div class="content-block">
+      <h3><span class="emoji">📝</span> 案例一：写一份项目 README</h3>
+      <p>对着 Hermes 说：<em>"帮我给当前项目写一份专业的 README.md"</em></p>
+      <p>Hermes 会自动扫描项目文件，理解项目结构，生成一份结构完整的 README。</p>
+    </div>
+    <div class="content-block">
+      <h3><span class="emoji">🔍</span> 案例二：代码审查</h3>
+      <p>对着 Hermes 说：<em>"审查 app.py 的代码，找出潜在的安全问题和性能瓶颈"</em></p>
+      <p>Hermes 会读文件、分析逻辑、给出详细的审查报告。</p>
+    </div>
+  </div>
+
+  <div class="content-block">
+    <h3><span class="emoji">📊</span> 案例三：数据分析</h3>
+    <p>对着 Hermes 说：<em>"分析 data.csv，画出销售趋势图，写一份分析报告"</em></p>
+    <p>Hermes 会：读文件 → 用 Python 做分析 → 用 matplotlib 画图 → 生成 Markdown 报告，全程自动化。</p>
+  </div>
+
+  <div class="highlight-box">
+    <div class="label">✨ 关键体验</div>
+    <p>第一次使用时你会惊讶：它不是简单的问答机器人。你说"帮我做X"，它真的会<strong>自动调用工具、执行命令、读取文件、生成结果</strong>——像一个真正的助手在操作你的电脑。</p>
+  </div>
+</section>
+
+<!-- ========== P6 ========== -->
+<section id="p6" class="chapter">
+  <div class="chapter-header">
+    <div class="chapter-num">06</div>
+    <div class="chapter-title-group">
+      <h2>个性化定制</h2>
+      <span class="duration">⏱ 11:35</span>
+    </div>
+  </div>
+  <div class="chapter-tags">
+    <span class="tag tag-purple">配置</span>
+    <span class="tag tag-blue">人格</span>
+  </div>
+
+  <div class="content-block">
+    <h3><span class="emoji">🎭</span> 让 Hermes 做自己 — 四种定制维度</h3>
+  </div>
+
+  <div class="two-col">
+    <div class="content-block">
+      <h3><span class="emoji">👤</span> 人格设置</h3>
+      <p>Hermes 有一个叫 <strong>Persona（人格）</strong> 的配置，定义了它的"性格"——你是想让 Hermes 像一个严谨的工程师，还是一个幽默的朋友？</p>
+      <pre><code># 在会话中切换人格
+/personality [name]
+
+# 查看可用人格
+hermes personality list</code></pre>
+      <p>人格文件是纯文本 Markdown，你可以完全自定义！</p>
+    </div>
+    <div class="content-block">
+      <h3><span class="emoji">🧠</span> 推理深度</h3>
+      <p>可以控制 Hermes 的"思考时间"：</p>
+      <pre><code>/reasoning [level]
+# none | minimal | low |
+# medium | high | xhigh</code></pre>
+      <p>推理越深，回答质量越高，但也消耗更多 token（成本更高）。日常聊天用 low，复杂编程用 high。</p>
+    </div>
+  </div>
+
+  <div class="content-block">
+    <h3><span class="emoji">👥</span> Profiles — 多身份切换</h3>
+    <p>Profiles 让你在一台机器上拥有<strong>多个独立的 Hermes</strong>——每个 Profile 有自己的配置、记忆、技能、会话历史。就像电脑的"多用户"功能。</p>
+    <pre><code>hermes profile create work       # 工作专用
+hermes profile create personal   # 个人专用
+hermes -p work                   # 以工作身份启动
+hermes -p personal               # 以个人身份启动</code></pre>
+  </div>
+
+  <div class="content-block">
+    <h3><span class="emoji">⚙️</span> 配置文件完全掌控</h3>
+    <pre><code>hermes config edit              # 在编辑器中打开完整配置
+hermes config set KEY VALUE     # 命令行修改单项
+hermes model                    # 交互式切换模型</code></pre>
+    <p>所有配置在 <code>~/.hermes/config.yaml</code> 中，透明、可编辑、可备份。</p>
+  </div>
+</section>
+
+<!-- ========== P7 ========== -->
+<section id="p7" class="chapter">
+  <div class="chapter-header">
+    <div class="chapter-num">07</div>
+    <div class="chapter-title-group">
+      <h2>工具与工具集</h2>
+      <span class="duration">⏱ 8:55</span>
+    </div>
+  </div>
+  <div class="chapter-tags">
+    <span class="tag tag-orange">Tools</span>
+    <span class="tag tag-green">插件系统</span>
+  </div>
+
+  <div class="content-block">
+    <h3><span class="emoji">🔧</span> 工具 — Hermes 的"手脚"</h3>
+    <p>工具是 Hermes 与外部世界交互的方式。就像人类用"手"抓东西、用"脚"走路，Hermes 用"工具"来操作文件、执行命令、搜索网络。</p>
+  </div>
+
+  <div class="content-block">
+    <h3><span class="emoji">📦</span> 内置工具集一览</h3>
+    <div class="table-wrap">
+      <table>
+        <tr><th>工具集</th><th>提供的能力</th><th>默认状态</th></tr>
+        <tr><td><code>terminal</code></td><td>执行 Shell 命令、进程管理</td><td>✅ 开启</td></tr>
+        <tr><td><code>file</code></td><td>读写搜索文件、代码编辑</td><td>✅ 开启</td></tr>
+        <tr><td><code>web</code></td><td>网络搜索、网页内容获取</td><td>✅ 开启</td></tr>
+        <tr><td><code>browser</code></td><td>浏览器自动化操作</td><td>可选</td></tr>
+        <tr><td><code>vision</code></td><td>图片分析和理解</td><td>✅ 开启</td></tr>
+        <tr><td><code>image_gen</code></td><td>AI 图片生成</td><td>可选</td></tr>
+        <tr><td><code>tts</code></td><td>文字转语音</td><td>可选</td></tr>
+        <tr><td><code>memory</code></td><td>跨会话持久记忆</td><td>✅ 开启</td></tr>
+        <tr><td><code>delegation</code></td><td>派生子 Agent 并行任务</td><td>✅ 开启</td></tr>
+        <tr><td><code>cronjob</code></td><td>定时任务调度</td><td>✅ 开启</td></tr>
+        <tr><td><code>session_search</code></td><td>搜索历史会话</td><td>✅ 开启</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="content-block">
+    <h3><span class="emoji">🎮</span> 管理工具</h3>
+    <pre><code>hermes tools                  # 交互式界面管理（推荐）
+hermes tools list             # 查看所有工具状态
+hermes tools enable browser   # 启用浏览器工具
+hermes tools disable web      # 禁用网络工具</code></pre>
+    <p><strong>省钱技巧：</strong> 如果不需要网络搜索，关掉 <code>web</code> 和 <code>browser</code> 工具集可以显著减少每次对话的 token 消耗。</p>
+  </div>
+</section>
+
+<!-- ========== P8 ========== -->
+<section id="p8" class="chapter">
+  <div class="chapter-header">
+    <div class="chapter-num">08</div>
+    <div class="chapter-title-group">
+      <h2>Skills — 机器的肌肉记忆</h2>
+      <span class="duration">⏱ 17:08</span>
+    </div>
+  </div>
+  <div class="chapter-tags">
+    <span class="tag tag-purple">核心特性</span>
+    <span class="tag tag-orange">进阶</span>
+  </div>
+
+  <div class="content-block">
+    <h3><span class="emoji">🧩</span> Skill 是什么？为什么它是杀手级特性？</h3>
+    <p><strong>Skills = 可复用的操作手册。</strong> 当 Hermes 成功完成一个复杂任务后，可以把整个工作流程保存为一个 Skill。下次遇到同类任务，直接加载这个 Skill，就像考试带了一份标准答案。</p>
+    <p>举个例子：你教会了 Hermes 如何部署一个 Docker 容器（需要 10+ 步操作）。把这个流程存为 Skill，以后说"部署容器"，Hermes 直接按手册操作，一步不差。</p>
+  </div>
+
+  <div class="content-block">
+    <h3><span class="emoji">📚</span> Skill 市场 &amp; 管理</h3>
+    <pre><code>hermes skills browse          # 浏览 Skills 市场
+hermes skills search python   # 搜索 Python 相关技能
+hermes skills install ID      # 安装技能
+hermes skills list            # 已安装的技能
+
+# 在会话中加载技能
+/skill hermes-agent</code></pre>
+    <p>Skills 市场有社区贡献的数百个技能——从 GitHub PR 工作流到数据分析管道，从游戏服务器部署到机器学习模型训练。</p>
+  </div>
+
+  <div class="highlight-box">
+    <div class="label">🧠 深层理解</div>
+    <p>Skills 让 Hermes 实现了<strong>"越用越聪明"</strong>的正循环。每次解决问题的经验不是用完就丢——它们被沉淀为可复用的知识，Agent 的能力随使用时间增长。这就是 Hermes 和普通 AI 助手的本质区别。</p>
+  </div>
+</section>
+
+<!-- ========== P9 ========== -->
+<section id="p9" class="chapter">
+  <div class="chapter-header">
+    <div class="chapter-num">09</div>
+    <div class="chapter-title-group">
+      <h2>持久记忆 — 让 AI 真正认识你</h2>
+      <span class="duration">⏱ 15:33</span>
+    </div>
+  </div>
+  <div class="chapter-tags">
+    <span class="tag tag-blue">Memory</span>
+    <span class="tag tag-purple">核心特性</span>
+  </div>
+
+  <div class="content-block">
+    <h3><span class="emoji">🧠</span> 两种记忆模式</h3>
+    <p>Hermes 有两层记忆系统，就像人类的"短期记忆"和"长期记忆"：</p>
+    <div class="two-col">
+      <div class="content-block">
+        <h3><span class="emoji">📝</span> 短期记忆</h3>
+        <p><strong>会话历史搜索</strong> — 能搜索你之前的所有聊天记录</p>
+        <p>比如："上次我们讨论的那个 bug 是怎么修的？" Hermes 会搜索历史会话找到答案。</p>
+      </div>
+      <div class="content-block">
+        <h3><span class="emoji">💾</span> 长期记忆</h3>
+        <p><strong>持久化关键信息</strong> — 跨会话记住你是谁</p>
+        <p>你的名字、编程风格偏好、项目结构、常用工具……每次对话都自动带入。</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="content-block">
+    <h3><span class="emoji">🔌</span> 记忆后端可插拔</h3>
+    <div class="table-wrap">
+      <table>
+        <tr><th>后端</th><th>特点</th></tr>
+        <tr><td>内置（默认）</td><td>零配置，SQLite 存储，开箱即用</td></tr>
+        <tr><td>Honcho</td><td>专业的 AI 记忆管理服务</td></tr>
+        <tr><td>Mem0</td><td>云端记忆服务，多设备同步</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <pre><code>hermes memory setup     # 配置记忆后端
+hermes memory status    # 查看记忆状态</code></pre>
+
+  <div class="highlight-box">
+    <div class="label">💡 实用场景</div>
+    <p>你告诉 Hermes "我喜欢简洁的回答，少用术语"。一星期后你再问问题，它还记得。这就是持久记忆的价值——<strong>不用每次都重新解释。</strong></p>
+  </div>
+</section>
+
+<!-- ========== P10 ========== -->
+<section id="p10" class="chapter">
+  <div class="chapter-header">
+    <div class="chapter-num">10</div>
+    <div class="chapter-title-group">
+      <h2>皮肤与主题</h2>
+      <span class="duration">⏱ 11:02</span>
+    </div>
+  </div>
+  <div class="chapter-tags">
+    <span class="tag tag-green">美化</span>
+    <span class="tag tag-blue">终端UI</span>
+  </div>
+
+  <div class="content-block">
+    <h3><span class="emoji">🎨</span> 让你的终端更好看</h3>
+    <p>Hermes 的 CLI 界面支持多种主题皮肤，从极简到赛博朋克风格都有。在会话中随时切换：</p>
+    <pre><code>/skin [name]           # 切换皮肤
+/skin list             # 查看所有可用皮肤</code></pre>
+    <p>皮肤不仅改变颜色，还能调整布局风格——工具调用是否显示、思考过程是否展开、状态栏样式等。</p>
+  </div>
+
+  <div class="content-block">
+    <h3><span class="emoji">🎛</span> 显示选项</h3>
+    <pre><code>hermes config set display.skin dracula    # 设置默认皮肤
+hermes config set display.show_reasoning true   # 显示推理过程
+hermes config set display.show_cost true         # 显示每次调用的花费
+hermes config set display.tool_progress true     # 显示工具执行进度</code></pre>
+    <p>不同的皮肤适合不同的场景——写代码用简洁主题，演示用炫酷主题。</p>
+  </div>
+</section>
+
+<!-- ========== P11 ========== -->
+<section id="p11" class="chapter">
+  <div class="chapter-header">
+    <div class="chapter-num">11</div>
+    <div class="chapter-title-group">
+      <h2>MCP 扩展 AI 工具能力</h2>
+      <span class="duration">⏱ 13:08</span>
+    </div>
+  </div>
+  <div class="chapter-tags">
+    <span class="tag tag-purple">高级</span>
+    <span class="tag tag-blue">协议</span>
+  </div>
+
+  <div class="content-block">
+    <h3><span class="emoji">🔌</span> 什么是 MCP？</h3>
+    <p><strong>MCP（Model Context Protocol）</strong> 是 Anthropic 推出的开放协议，让 AI 模型能安全地访问外部工具和数据源。你可以把它理解为"AI 工具的 USB-C 接口"——统一标准，即插即用。</p>
+  </div>
+
+  <div class="content-block">
+    <h3><span class="emoji">🎯</span> 为什么需要 MCP？</h3>
+    <p>Hermes 内置的工具虽然强大，但总有覆盖不到的场景。MCP 让你可以接入任何第三方工具——数据库管理工具、项目管理平台、自定义 API……只要对方支持 MCP 协议，Hermes 就能用。</p>
+    <pre><code>hermes mcp add my-tool --url http://localhost:3000
+hermes mcp list               # 查看已连接的 MCP 服务
+hermes mcp test my-tool       # 测试连接
+hermes mcp remove my-tool     # 断开连接</code></pre>
+  </div>
+
+  <div class="highlight-box">
+    <div class="label">🌍 生态</div>
+    <p>MCP 生态正在快速发展。社区已经有数百个 MCP 服务器——连接 Notion、Airtable、PostgreSQL、GitHub 等。这意味着 Hermes 的能力边界<strong>几乎无限</strong>。</p>
+  </div>
+</section>
+
+<!-- ========== P12 ========== -->
+<section id="p12" class="chapter">
+  <div class="chapter-header">
+    <div class="chapter-num">12</div>
+    <div class="chapter-title-group">
+      <h2>定时任务 (Cron)</h2>
+      <span class="duration">⏱ 17:53</span>
+    </div>
+  </div>
+  <div class="chapter-tags">
+    <span class="tag tag-orange">自动化</span>
+    <span class="tag tag-purple">调度</span>
+  </div>
+
+  <div class="content-block">
+    <h3><span class="emoji">⏰</span> 让 AI 定时为你工作</h3>
+    <p>Hermes 内置了一个 Cron 调度器。你可以设置定时任务，让 Hermes 在指定时间自动执行——<strong>不需要你在线，不需要手动触发。</strong></p>
+  </div>
+
+  <div class="content-block">
+    <h3><span class="emoji">📋</span> 实用场景</h3>
+    <ul>
+      <li><strong>每天早上 8 点</strong>：抓取你关注的博客更新，生成摘要发到微信</li>
+      <li><strong>每小时</strong>：检查服务器健康状态，异常时自动报警</li>
+      <li><strong>每周五</strong>：整理 GitHub 项目进展，生成周报</li>
+      <li><strong>收盘后</strong>：抓取股票数据，分析趋势</li>
+    </ul>
+  </div>
+
+  <div class="content-block">
+    <h3><span class="emoji">⌨️</span> 命令速查</h3>
+    <pre><code>hermes cron create "0 9 * * *"   # 每天早上9点
+hermes cron create "every 2h"     # 每2小时
+hermes cron create "30m"          # 30分钟后执行一次
+hermes cron list                  # 查看所有定时任务
+hermes cron pause my-job          # 暂停任务
+hermes cron resume my-job         # 恢复任务
+hermes cron remove my-job         # 删除任务</code></pre>
+  </div>
+
+  <div class="tip-card">
+    <div class="tip-icon success">💡</div>
+    <div>
+      <strong>定时任务的输出自动送达</strong>
+      <p style="margin:4px 0 0;">如果配置了 Gateway，定时任务的执行结果会自动发送到你的微信/Telegram/Discord。你不需要主动查看。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ========== P13 ========== -->
+<section id="p13" class="chapter">
+  <div class="chapter-header">
+    <div class="chapter-num">13</div>
+    <div class="chapter-title-group">
+      <h2>Web 仪表板</h2>
+      <span class="duration">⏱ 6:32</span>
+    </div>
+  </div>
+  <div class="chapter-tags">
+    <span class="tag tag-blue">Web UI</span>
+    <span class="tag tag-green">可视化</span>
+  </div>
+
+  <div class="content-block">
+    <h3><span class="emoji">🖥</span> 不只是终端 — Hermes 也有 Web 界面</h3>
+    <p>虽然 Hermes 以终端界面著称，但它也提供了 Web 仪表板，适合不习惯命令行的用户、或者需要可视化管理的场景。</p>
+  </div>
+
+  <div class="content-block">
+    <h3><span class="emoji">📊</span> 仪表板能做什么？</h3>
+    <ul>
+      <li><strong>会话管理</strong>：浏览、搜索、导出历史会话</li>
+      <li><strong>使用统计</strong>：Token 消耗、花费分析、使用趋势图</li>
+      <li><strong>Skills 管理</strong>：浏览、安装、启停技能</li>
+      <li><strong>Cron 任务可视化</strong>：查看、创建、管理定时任务</li>
+      <li><strong>Gateway 状态</strong>：查看各平台连接状态</li>
+      <li><strong>配置管理</strong>：图形化编辑配置文件</li>
+    </ul>
+  </div>
+
+  <pre><code>hermes insights --days 30    # 查看30天使用统计
+hermes sessions browse       # 交互式浏览会话</code></pre>
+</section>
+
+<!-- ========== P14 ========== -->
+<section id="p14" class="chapter">
+  <div class="chapter-header">
+    <div class="chapter-num">14</div>
+    <div class="chapter-title-group">
+      <h2>最佳实践</h2>
+      <span class="duration">⏱ 14:07</span>
+    </div>
+  </div>
+  <div class="chapter-tags">
+    <span class="tag tag-orange">技巧</span>
+    <span class="tag tag-purple">总结</span>
+  </div>
+
+  <div class="content-block">
+    <h3><span class="emoji">🏆</span> 10 条最佳实践</h3>
+    <ol style="padding-left:20px; color: var(--text-dim); font-size: 14px; line-height: 2;">
+      <li><strong>从简单任务开始</strong> — 先用 Hermes 做文件操作、信息查询等简单任务，建立信任后再让它操作关键系统。</li>
+      <li><strong>善用 Skills</strong> — 完成复杂任务后立刻存为 Skill。这是 Hermes 增值最快的方式。</li>
+      <li><strong>开启持久记忆</strong> — 让 Hermes 记住你的偏好、项目结构、常用工具，长期下来体验显著提升。</li>
+      <li><strong>合理使用推理深度</strong> — 闲聊用 <code>/reasoning low</code>，写代码用 <code>/reasoning high</code>，省钱又高效。</li>
+      <li><strong>配置 Profiles</strong> — 工作和个人分开，避免记忆和配置混乱。</li>
+      <li><strong>善用定时任务</strong> — 把重复性工作交给 Cron，让 AI 替你跑腿。</li>
+      <li><strong>工具集按需开启</strong> — 不需要的工具关掉，减少 token 消耗和响应时间。</li>
+      <li><strong>学习斜杠命令</strong> — <code>/new</code> 开新会话、<code>/compress</code> 压缩上下文、<code>/undo</code> 撤销，这些命令能大幅提升操作效率。</li>
+      <li><strong>及时更新</strong> — <code>hermes update</code> 保持最新版本，新功能和修复不断推出。</li>
+      <li><strong>加入社区</strong> — Hermes 开源且活跃，遇到问题去 GitHub Issues 或社区求助，通常很快得到解答。</li>
+    </ol>
+  </div>
+
+  <div class="content-block">
+    <h3><span class="emoji">🔑</span> 核心安全原则</h3>
+    <div class="two-col">
+      <div class="tip-card">
+        <div class="tip-icon warn">⚠️</div>
+        <div><strong>不要 --yolo</strong><br>除非你完全信任任务，否则不要跳过命令审批。默认的 <code>approvals.mode: manual</code> 会在执行危险命令前让你确认。</div>
+      </div>
+      <div class="tip-card">
+        <div class="tip-icon info">🔐</div>
+        <div><strong>API Key 放 .env</strong><br>密钥放在 <code>~/.hermes/.env</code> 中，不要写在配置文件里，更不要分享给他人。</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="highlight-box">
+    <div class="label">🌟 学习路径总结</div>
+    <p>
+      第1-3集打基础 → 第4-5集上手实操 → 第6-7集个性化配置 → 第8-9集核心特性（Skills + 记忆）→ 第10-13集高级功能 → 第14集成最佳实践。<br>
+      学完这套教程，你就能把 Hermes Agent 变成真正的<strong>私人 AI 管家</strong>。
+    </p>
+  </div>
+</section>
+
+</main>
+
+<footer class="footer">
+  <p>
+    📺 原视频：<a href="https://www.bilibili.com/video/BV13YRjBTEPb" target="_blank">B站 BV13YRjBTEPb</a> · 
+    📖 官方文档：<a href="https://hermes-agent.nousresearch.com/docs/" target="_blank">hermes-agent.nousresearch.com</a> · 
+    💻 GitHub：<a href="https://github.com/NousResearch/hermes-agent" target="_blank">NousResearch/hermes-agent</a>
+  </p>
+  <p style="margin-top: 8px;">整理于 2026 年 · Hermes Agent 学习笔记</p>
+</footer>
+
+</div>
+
+<script>
+// Highlight active nav on scroll
+const sections = document.querySelectorAll('.chapter');
+const navLinks = document.querySelectorAll('.nav-link');
+
+window.addEventListener('scroll', () => {
+  let current = '';
+  sections.forEach(section => {
+    const top = section.offsetTop - 100;
+    if (window.scrollY >= top) {
+      current = section.getAttribute('id');
+    }
+  });
+  navLinks.forEach(link => {
+    link.classList.remove('active');
+    if (link.getAttribute('href') === '#' + current) {
+      link.classList.add('active');
+    }
+  });
+});
+</script>
+
+</body>
+</html>
