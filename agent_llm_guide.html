@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Agent 与 LLM 全景解读</title>
+<style>
+  :root {
+    --bg: #0f172a;
+    --card: #1e293b;
+    --border: #334155;
+    --accent: #6366f1;
+    --accent2: #8b5cf6;
+    --text: #e2e8f0;
+    --text2: #94a3b8;
+    --text3: #64748b;
+    --green: #22c55e;
+    --red: #ef4444;
+    --orange: #f59e0b;
+    --blue: #3b82f6;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.8;
+    padding: 0;
+  }
+  .container { max-width: 880px; margin: 0 auto; padding: 20px; }
+  
+  /* Header */
+  .hero {
+    text-align: center;
+    padding: 60px 20px 40px;
+    background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 50%, #1a0b2e 100%);
+    border-bottom: 1px solid var(--border);
+  }
+  .hero h1 { font-size: 2.2em; background: linear-gradient(135deg, var(--accent2), var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 10px; }
+  .hero p { color: var(--text2); font-size: 1.1em; }
+  .hero .date { color: var(--text3); font-size: 0.85em; margin-top: 12px; }
+  
+  /* Sections */
+  section { margin: 40px 0; }
+  h2 {
+    font-size: 1.5em;
+    color: var(--accent2);
+    border-left: 4px solid var(--accent);
+    padding-left: 16px;
+    margin-bottom: 20px;
+  }
+  h3 { font-size: 1.15em; color: var(--text); margin: 24px 0 12px; }
+  p { margin-bottom: 14px; color: var(--text2); }
+  strong { color: var(--text); }
+  
+  /* Cards */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    margin: 16px 0;
+  }
+  
+  /* Concept boxes */
+  .concept-box {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    margin: 16px 0;
+  }
+  .concept-box.llm { border-left: 4px solid var(--blue); }
+  .concept-box.agent { border-left: 4px solid var(--green); }
+  .concept-box .label {
+    display: inline-block;
+    padding: 2px 12px;
+    border-radius: 20px;
+    font-size: 0.8em;
+    font-weight: 600;
+    margin-bottom: 12px;
+  }
+  .concept-box.llm .label { background: rgba(59,130,246,0.2); color: var(--blue); }
+  .concept-box.agent .label { background: rgba(34,197,94,0.2); color: var(--green); }
+  
+  /* The loop */
+  .loop {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin: 20px 0;
+    font-size: 0.9em;
+  }
+  .loop-item {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 18px;
+    white-space: nowrap;
+  }
+  .loop-arrow { color: var(--accent); font-size: 1.3em; }
+  
+  /* Tables */
+  .table-wrap {
+    overflow-x: auto;
+    margin: 16px 0;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88em;
+    min-width: 700px;
+  }
+  th {
+    background: var(--accent);
+    color: #fff;
+    padding: 12px 10px;
+    text-align: left;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  td {
+    padding: 10px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text2);
+    vertical-align: top;
+  }
+  tr:nth-child(even) td { background: rgba(30,41,59,0.5); }
+  tr:hover td { background: rgba(99,102,241,0.08); }
+  .tag {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 0.78em;
+    font-weight: 600;
+  }
+  .tag.open { background: rgba(34,197,94,0.15); color: var(--green); }
+  .tag.closed { background: rgba(239,68,68,0.15); color: var(--red); }
+  .tag.partial { background: rgba(245,158,11,0.15); color: var(--orange); }
+  
+  /* Bullet list */
+  ul { list-style: none; margin: 12px 0; }
+  li { padding: 6px 0 6px 24px; position: relative; color: var(--text2); }
+  li::before {
+    content: "▸";
+    position: absolute;
+    left: 0;
+    color: var(--accent);
+  }
+  
+  /* Comparison */
+  .compare-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin: 16px 0;
+  }
+  @media (max-width: 600px) { .compare-grid { grid-template-columns: 1fr; } }
+  
+  /* Architecture diagram */
+  .arch {
+    background: var(--card);
+    border-radius: 12px;
+    padding: 28px;
+    margin: 16px 0;
+    text-align: center;
+  }
+  .arch-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 8px 0;
+  }
+  .arch-box {
+    background: var(--bg);
+    border: 2px solid;
+    border-radius: 10px;
+    padding: 12px 20px;
+    font-size: 0.9em;
+    font-weight: 600;
+  }
+  .arch-box.user { border-color: var(--accent2); color: var(--accent2); }
+  .arch-box.ctrl { border-color: var(--accent); color: var(--accent); }
+  .arch-box.llm-box { border-color: var(--blue); color: var(--blue); }
+  .arch-box.tool { border-color: var(--green); color: var(--green); }
+  .arch-arrow { color: var(--text3); font-size: 1.5em; }
+  .arch-arrow.down { display: block; margin: 8px auto; font-size: 1.3em; }
+  
+  /* FAQ */
+  .faq-item {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin: 12px 0;
+  }
+  .faq-item .q {
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+  .faq-item .q::before { content: "Q: "; color: var(--accent); }
+  .faq-item .a { color: var(--text2); }
+  .faq-item .a::before { content: "A: "; color: var(--green); }
+  
+  /* Footer */
+  footer {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text3);
+    font-size: 0.85em;
+    border-top: 1px solid var(--border);
+    margin-top: 40px;
+  }
+  
+  /* Mobile tweaks */
+  @media (max-width: 600px) {
+    .hero h1 { font-size: 1.6em; }
+    h2 { font-size: 1.2em; }
+    .loop { flex-direction: column; }
+    .loop-arrow { transform: rotate(90deg); }
+    .arch-row { flex-direction: column; }
+    .arch-arrow { transform: rotate(90deg); }
+  }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <h1>🤖 AI Agent 与 LLM 全景解读</h1>
+  <p>概念区分 · 主流产品 · 选择建议</p>
+  <p class="date">2025 年 5 月 · Powered by Hermes Agent</p>
+</div>
+
+<div class="container">
+
+<!-- ===== Section 1: Core Concepts ===== -->
+<section>
+  <h2>一、核心概念：Agent vs LLM</h2>
+  
+  <h3>1.1 什么是大语言模型（LLM）？</h3>
+  <p>大语言模型（Large Language Model，LLM）本质上是一个<strong>「超级大脑」</strong> —— 它读了海量的书籍、代码、网页，学会了理解和生成文字。可以把它想象成一个<strong>博学但被关在图书馆里的学者</strong>：什么都懂，但只能通过文字跟你交流，不能自己上网、不能操作电脑、也不能帮发微信。</p>
+  <p>举个例子：你问 ChatGPT「深圳今天天气怎么样？」，它能给一个基于训练数据的猜测，但<strong>不会真正去查天气网站</strong>。因为 LLM 只是一个「推理引擎」，没有执行动作的能力。</p>
+  
+  <h3>1.2 什么是 AI Agent？</h3>
+  <p>AI Agent（智能体）是 <strong>LLM + 工具 + 行动能力</strong> 的结合体。如果 LLM 是「大脑」，Agent 就是「有手有脚的人」—— 能思考，也能行动。</p>
+  
+  <div class="card">
+    <p style="margin-bottom:12px;color:var(--text);font-weight:600;">Agent 的核心循环：</p>
+    <div class="loop">
+      <div class="loop-item">👁️ 观察 (Observe)</div>
+      <span class="loop-arrow">→</span>
+      <div class="loop-item">🧠 思考 (Think)</div>
+      <span class="loop-arrow">→</span>
+      <div class="loop-item">🤲 行动 (Act)</div>
+      <span class="loop-arrow">→</span>
+      <div class="loop-item">📊 反馈 (Feedback)</div>
+      <span class="loop-arrow">↻</span>
+    </div>
+  </div>
+  
+  <div class="compare-grid">
+    <div class="concept-box llm">
+      <div class="label">LLM（大模型）</div>
+      <ul>
+        <li>只能生成文字</li>
+        <li>知识有截止日期</li>
+        <li>不能操作外部世界</li>
+        <li>没有长期记忆</li>
+        <li>举例：GPT-4o、Claude、Gemini</li>
+      </ul>
+    </div>
+    <div class="concept-box agent">
+      <div class="label">Agent（智能体）</div>
+      <ul>
+        <li>能用工具做事</li>
+        <li>可联网获取实时信息</li>
+        <li>能操作电脑/发送消息</li>
+        <li>有持久化记忆和技能</li>
+        <li>举例：Hermes、Claude Code、Cursor</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>1.3 一句话区分</h3>
+  <p><strong>LLM 是能「说」的模型，Agent 是能「做」的系统。</strong>LLM 提供智能，Agent 提供行动力。所有 Agent 都依赖 LLM，但<strong>不是所有 LLM 都能直接当 Agent 用</strong>。</p>
+  <p>所以 <strong>Gemini 是 LLM</strong>，不是 Agent。Codex 是 Agent。ChatGPT 基础版更像 LLM 聊天界面，但它的插件/GPTs 有部分 Agent 特性。</p>
+</section>
+
+<!-- ===== Section 2: Agents ===== -->
+<section>
+  <h2>二、主流 AI Agent 产品</h2>
+  <p>目前市面上的 Agent 主要分<strong>通用 Agent</strong>（什么都能干）和<strong>编码 Agent</strong>（专注写代码）。</p>
+  
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Agent 名称</th>
+          <th>开发者</th>
+          <th>定位</th>
+          <th>核心特点</th>
+          <th>开源</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Claude Code</strong></td>
+          <td>Anthropic</td>
+          <td>编码 CLI</td>
+          <td>终端交互式编码；支持 Opus/Sonnet/Haiku；可在 Hermes 中作为子 Agent 调用；具备 PR Review 能力</td>
+          <td><span class="tag closed">闭源</span></td>
+        </tr>
+        <tr>
+          <td><strong>OpenAI Codex</strong></td>
+          <td>OpenAI</td>
+          <td>编码 CLI</td>
+          <td>基于 GPT 模型；一键 exec 执行；支持全自主模式；可在 Hermes 中作为编码委托工具</td>
+          <td><span class="tag open">开源</span></td>
+        </tr>
+        <tr>
+          <td><strong>Hermes Agent</strong></td>
+          <td>Nous Research</td>
+          <td>通用框架</td>
+          <td>支持 20+ 模型供应商；跨平台（微信/Discord/Telegram等）；持久记忆；技能自我进化；定时任务</td>
+          <td><span class="tag open">开源</span></td>
+        </tr>
+        <tr>
+          <td><strong>GitHub Copilot</strong></td>
+          <td>Microsoft</td>
+          <td>IDE 编码助手</td>
+          <td>深度集成 VS Code / JetBrains；Agent Mode 自主编码；Coding+Chat 双模式</td>
+          <td><span class="tag closed">闭源</span></td>
+        </tr>
+        <tr>
+          <td><strong>Cursor</strong></td>
+          <td>Cursor Inc.</td>
+          <td>AI IDE</td>
+          <td>内置 Agent 模式；Composer 多文件编辑；可自主执行终端命令</td>
+          <td><span class="tag partial">部分</span></td>
+        </tr>
+        <tr>
+          <td><strong>Devin</strong></td>
+          <td>Cognition AI</td>
+          <td>自主编码 Agent</td>
+          <td>全栈自主开发；自带浏览器/终端/编辑器；适合复杂多步骤项目</td>
+          <td><span class="tag closed">闭源</span></td>
+        </tr>
+        <tr>
+          <td><strong>Windsurf</strong></td>
+          <td>Codeium</td>
+          <td>AI IDE</td>
+          <td>Cascade 流式自主编码；多文件上下文感知</td>
+          <td><span class="tag partial">部分</span></td>
+        </tr>
+        <tr>
+          <td><strong>Aider</strong></td>
+          <td>开源社区</td>
+          <td>编码 CLI</td>
+          <td>Git 原生集成；可接入任何 LLM；轻量级；地图式代码编辑</td>
+          <td><span class="tag open">开源</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>编码 Agent 的典型工作流</h3>
+  <p>读取项目代码 → 理解需求 → 修改文件 → 运行测试 → 提交 Git。在 Hermes 生态里，这些编码 Agent 都可以作为「子 Agent」被调遣。</p>
+  
+  <h3>通用 Agent 的独特价值</h3>
+  <p>不限于编码，可以做研究、数据分析、自动化任务、智能家居、内容创作。Hermes 的独特之处在于它的<strong>「技能系统」</strong>——完成任务的方法能存成技能，下次自动调用，越用越顺手。</p>
+</section>
+
+<!-- ===== Section 3: LLMs ===== -->
+<section>
+  <h2>三、主流大语言模型（LLM）</h2>
+  <p>以下按开发者分类，列出 2025 年最具影响力的大模型。它们是 Agent 的「大脑」，不同 Agent 可以搭载不同的模型。</p>
+  
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>模型名称</th>
+          <th>开发者</th>
+          <th>核心特点</th>
+          <th>开源</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>GPT-4o / 4.1</strong></td>
+          <td>OpenAI</td>
+          <td>多模态（文本+图像+音频）；128K 上下文；函数调用强；推理速度快</td>
+          <td><span class="tag closed">闭源</span></td>
+        </tr>
+        <tr>
+          <td><strong>Claude 4 Sonnet/Opus</strong></td>
+          <td>Anthropic</td>
+          <td>200K 上下文；长文本理解出色；编码能力顶尖；支持思维链（thinking）</td>
+          <td><span class="tag closed">闭源</span></td>
+        </tr>
+        <tr>
+          <td><strong>Gemini 2.5 Pro</strong></td>
+          <td>Google</td>
+          <td>原生多模态；100 万 token 上下文（全球最长）；深度推理能力</td>
+          <td><span class="tag closed">闭源</span></td>
+        </tr>
+        <tr>
+          <td><strong>DeepSeek V3 / R1</strong></td>
+          <td>深度求索</td>
+          <td>国产最强开源模型；R1 推理匹敌 o1；API 价格极低；支持 128K 上下文</td>
+          <td><span class="tag open">开源</span></td>
+        </tr>
+        <tr>
+          <td><strong>Qwen 3 / Qwen-Max</strong></td>
+          <td>阿里</td>
+          <td>中文能力顶尖；开源+商用版本；覆盖 0.5B~235B 多规格</td>
+          <td><span class="tag partial">部分</span></td>
+        </tr>
+        <tr>
+          <td><strong>Llama 4</strong></td>
+          <td>Meta</td>
+          <td>开源标杆；生态最丰富；社区微调版本众多；适合本地部署</td>
+          <td><span class="tag open">开源</span></td>
+        </tr>
+        <tr>
+          <td><strong>Mistral Large 2</strong></td>
+          <td>Mistral AI</td>
+          <td>欧洲最强开源模型；多语言；代码和推理出色；128K 上下文</td>
+          <td><span class="tag open">开源</span></td>
+        </tr>
+        <tr>
+          <td><strong>Kimi K2</strong></td>
+          <td>月之暗面</td>
+          <td>超长上下文（200 万字）；中文理解和推理出色；适合长文档</td>
+          <td><span class="tag closed">闭源</span></td>
+        </tr>
+        <tr>
+          <td><strong>Grok 3</strong></td>
+          <td>xAI（马斯克）</td>
+          <td>实时网络信息接入；推理模式（Think）；幽默风格</td>
+          <td><span class="tag closed">闭源</span></td>
+        </tr>
+        <tr>
+          <td><strong>混元 / 元宝</strong></td>
+          <td>腾讯</td>
+          <td>中文生态深度整合；微信/元宝生态；多模态能力</td>
+          <td><span class="tag closed">闭源</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>模型选择速查</h3>
+  <div class="card">
+    <ul>
+      <li><strong>日常对话 & 中文任务</strong> → DeepSeek V3、Qwen 3</li>
+      <li><strong>复杂推理 & 数学</strong> → Claude 4 Opus、DeepSeek R1</li>
+      <li><strong>超长文档处理</strong> → Gemini 2.5 Pro（100万token）、Kimi K2</li>
+      <li><strong>代码生成</strong> → Claude Sonnet 4、GPT-4o</li>
+      <li><strong>隐私优先 & 本地部署</strong> → DeepSeek V3、Llama 4、Qwen 3</li>
+      <li><strong>多模态（图像理解）</strong> → GPT-4o、Gemini 2.5 Pro</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ===== Section 4: Architecture ===== -->
+<section>
+  <h2>四、Agent 与 LLM 的关系</h2>
+  
+  <h3>4.1 架构示意</h3>
+  <div class="arch">
+    <div class="arch-box user">👤 用户指令</div>
+    <div class="arch-arrow down">↓</div>
+    <div class="arch-box ctrl">⚙️ Agent 控制器（编排逻辑）</div>
+    <div class="arch-row">
+      <div style="text-align:center">
+        <div class="arch-arrow">→</div>
+        <div class="arch-box llm-box">🧠 LLM 推理</div>
+        <div class="arch-arrow">←</div>
+      </div>
+    </div>
+    <div class="arch-arrow down">↓</div>
+    <div class="arch-box tool">🛠️ 工具执行（终端/文件/网络/API）</div>
+    <div style="color:var(--text3);margin-top:16px;font-size:0.85em">循环直到任务完成 → 返回结果给用户</div>
+  </div>
+
+  <h3>4.2 Agent 框架 vs 单体 Agent</h3>
+  <div class="compare-grid">
+    <div class="card">
+      <p style="color:var(--text);font-weight:600;">单体 Agent</p>
+      <p style="font-size:0.9em">如 Claude Code、Codex —— 具体产品，自带模型、自带工具、开箱即用。像<strong>现成的特斯拉</strong>，买来就能开。</p>
+    </div>
+    <div class="card">
+      <p style="color:var(--text);font-weight:600;">Agent 框架</p>
+      <p style="font-size:0.9em">如 Hermes、LangChain —— 模块化平台，让你接入任意模型、配置任意工具、搭建自己的 Agent。像<strong>造车平台</strong>，选发动机、配轮子、装导航。</p>
+    </div>
+  </div>
+
+  <h3>4.3 为什么需要 Agent？</h3>
+  <p>纯 LLM 有先天局限：知识截止日期固定、不能实时获取信息、不能执行操作、没有长期记忆。Agent 通过工具调用突破知识边界，通过记忆系统跨会话保持上下文，通过技能系统不断进化。这就是为什么 2025 年被称为<strong>「Agent 元年」</strong>—— AI 从「聊天」进化到「办事」。</p>
+</section>
+
+<!-- ===== Section 5: Quick Start ===== -->
+<section>
+  <h2>五、快速上手建议</h2>
+
+  <h3>只想体验 Agent</h3>
+  <ul>
+    <li>终端装 Claude Code：<code>npm install -g @anthropic-ai/claude-code</code>，输入 <code>claude</code> 即可</li>
+    <li>或装 Hermes：<code>curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh | bash</code></li>
+    <li>想用聊天界面？装 <strong>Cursor</strong>，体验 IDE 内的 Agent 模式</li>
+  </ul>
+
+  <h3>想深度定制 Agent</h3>
+  <p>首选 <strong>Hermes</strong>。能接入 20+ 模型供应商，在微信/Discord/Slack 使用同一个 Agent，写技能让它自我进化，定时自动执行任务。</p>
+
+  <h3>选模型还是选 Agent？</h3>
+  <div class="card">
+    <ul>
+      <li><strong>只需生成文字、翻译、总结</strong> → 直接用 LLM（ChatGPT、Claude、DeepSeek）就够了</li>
+      <li><strong>需要 AI 操作电脑、写代码、查实时数据、定时做任务</strong> → 你需要 Agent</li>
+      <li><strong>最佳方式</strong>：用一个通用 Agent 框架（如 Hermes），搭配最合适的 LLM，各司其职</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ===== FAQ ===== -->
+<section>
+  <h2>六、常见问答</h2>
+
+  <div class="faq-item">
+    <div class="q">Gemini 是 Agent 吗？</div>
+    <div class="a">不，Gemini 是 LLM（大模型）。用 Gemini 做底层模型的工具才可能是 Agent。</div>
+  </div>
+  <div class="faq-item">
+    <div class="q">Codex 是 Agent 吗？</div>
+    <div class="a">是的，OpenAI Codex CLI 是一个编码 Agent，跟 Claude Code 同类。</div>
+  </div>
+  <div class="faq-item">
+    <div class="q">ChatGPT 是 Agent 吗？</div>
+    <div class="a">基础版更像 LLM 聊天界面。Plus 版的插件/GPTs 有部分 Agent 特性，但不完全是 Agent。</div>
+  </div>
+  <div class="faq-item">
+    <div class="q">最好的编码 Agent？</div>
+    <div class="a">看场景：快速修 bug → Claude Code；IDE 内无缝 → Cursor/Copilot；复杂多步骤 → Devin。</div>
+  </div>
+  <div class="faq-item">
+    <div class="q">免费 / 便宜的方案？</div>
+    <div class="a">模型用 DeepSeek V3（极便宜），Agent 用 Hermes（开源免费），两个搭配性价比最高。</div>
+  </div>
+  <div class="faq-item">
+    <div class="q">Agent 会取代程序员吗？</div>
+    <div class="a">不会。Agent 是工具，能大幅提效，但架构设计、需求理解、质量把关仍然需要人。</div>
+  </div>
+</section>
+
+<footer>
+  由 <strong>Hermes Agent</strong> 自动生成 · 2025 年 5 月<br>
+  数据基于截至 2025 年 5 月的公开信息
+</footer>
+
+</div>
+</body>
+</html>
