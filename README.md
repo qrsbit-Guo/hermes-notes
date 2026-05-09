@@ -15,4 +15,4 @@
 
 | 文档 | 说明 |
 |------|------|
-| [🤖 AI Agent 与 LLM 全景解读](agent_llm_guide.html) | Agent vs LLM 概念区分、主流产品对比、选择建议 |
+| [🤖 AI Agent 与 LLM 全景解读](https://qrsbit-guo.github.io/hermes-notes/agent_llm_guide.html) | Agent vs LLM 概念区分、主流产品对比、选择建议 |
